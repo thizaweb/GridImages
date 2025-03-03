@@ -7,10 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.InputStream;
@@ -21,12 +18,15 @@ public class HelloApplication extends Application {
 
     private List<Image> images = new ArrayList<>(); // List to store images
     private FlowPane flowPane = new FlowPane(); // FlowPane to hold image thumbnails
-    private ImageView fullImageView = new ImageView(); // ImageView for displaying full-size images
-    private Stage fullImageStage; // Stage for displaying full-size images
+    private ImageView fullImageView = new ImageView(); // ImageView for full-size images
     private int currentIndex = 0; // Keeps track of the currently displayed image index
+    private VBox mainLayout; // Main layout to switch views
+    private Scene mainScene;
+    private Stage primaryStage; // Reference to primary stage
 
     @Override
     public void start(Stage stage) {
+        this.primaryStage = stage;
 
         // The label as the title
         var label = new Label("PrivateThrifts Ty");
@@ -41,10 +41,10 @@ public class HelloApplication extends Application {
         HBox buttons = new HBox(15, btn1, btn2, btn3, btn4);
         buttons.setAlignment(Pos.CENTER);
 
-        // VBox layout to arrange label, buttons, and image grid
-        VBox layout = new VBox(10, label, buttons, flowPane);
-        layout.setStyle("-fx-background-color: #00FFFF;");
-        layout.setAlignment(Pos.CENTER);
+        // VBox layout for gallery view
+        mainLayout = new VBox(10, label, buttons, flowPane);
+        mainLayout.setStyle("-fx-background-color: #00FFFF;");
+        mainLayout.setAlignment(Pos.CENTER);
 
         // Button Actions - Load images when clicking the buttons
         btn1.setOnAction(e -> {
@@ -64,59 +64,32 @@ public class HelloApplication extends Application {
             displayGridImages();
         });
 
-        // Scene setup
-        var scene = new Scene(layout, 600, 600);
-        stage.setScene(scene);
-        stage.setTitle("Rich Internet Image Gallery");
-        stage.show();
-
-        // Full Image Stage Setup
-        fullImageStage = new Stage();
-        fullImageStage.setTitle("Full-Size Image");
-
-        // Navigation Buttons
-        Button prevButton = new Button("Previous");
-        Button nextButton = new Button("Next");
-        Button backButton = new Button("Back");
-
-        // Event Listeners for Navigation
-        prevButton.setOnAction(e -> navigateImages(-1)); // Show previous image
-        nextButton.setOnAction(e -> navigateImages(1)); // Show next image
-        backButton.setOnAction(e -> fullImageStage.hide()); // Close full-screen view
-
-        // HBox for navigation buttons
-        HBox navigationBox = new HBox(10, prevButton, nextButton, backButton);
-        navigationBox.setAlignment(Pos.CENTER);
-
-        // VBox layout for full image display
-        VBox fullImageLayout = new VBox(10, fullImageView, navigationBox);
-        fullImageLayout.setAlignment(Pos.CENTER);
-        fullImageLayout.setStyle("-fx-background-color: #008080;");
-
-        // Scene setup for full image stage
-        Scene fullImageScene = new Scene(fullImageLayout, 600, 600);
-        fullImageStage.setScene(fullImageScene);
+        // Set up the main scene
+        mainScene = new Scene(mainLayout, 600, 600);
+        primaryStage.setScene(mainScene);
+        primaryStage.setTitle("Rich Internet Image Gallery");
+        primaryStage.show();
     }
 
-    // Method to load delela images
+    // Method to load Delela images
     private void loadDelelaImages() {
         images.clear();
         loadImages("/images/Delela/IMG", "jpg", 10);
     }
 
-    // Method to load hoodies images
+    // Method to load Hoodies images
     private void loadHoodiesImages() {
         images.clear();
         loadImages("/images/Hoodies/hoodie", "jpg", 10);
     }
 
-    // Method to load shirts images
+    // Method to load Shirts images
     private void loadShirtsImages() {
         images.clear();
         loadImages("/images/Shirts/shirt", "jpg", 10);
     }
 
-    // Method to load shorts images
+    // Method to load Shorts images
     private void loadShortsImages() {
         images.clear();
         loadImages("/images/Shorts/short", "jpg", 10);
@@ -149,12 +122,12 @@ public class HelloApplication extends Application {
             imageView.setFitHeight(100);
             imageView.setStyle("-fx-border-width: 2px; -fx-border-radius: 5px; -fx-padding: 5px;");
 
-            // Hover effect (No color change)
+            // Hover effects
             imageView.setOnMouseEntered(e -> imageView.setStyle(
-                    "-fx-border-width: 2px; -fx-border-radius: 5px; -fx-padding: 5px; -fx-opacity: 0.7;"
+                    "-fx-border-width: 2px; -fx-border-radius: 5px; -fx-padding: 5px; -fx-opacity: 0.7; -fx-translate-y:10;"
             ));
             imageView.setOnMouseExited(e -> imageView.setStyle(
-                    "-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px; -fx-padding: 5px;"
+                    "-fx-border-color: red; -fx-border-width: 2px; -fx-border-radius: 5px; -fx-padding: 5px; -fx-translate-x:10;"
             ));
 
             int finalI = i;
@@ -163,15 +136,36 @@ public class HelloApplication extends Application {
         }
     }
 
-    // Shows full image in a separate stage
+    // Shows full image within the same scene
     private void showFullImage(int index) {
         if (index >= 0 && index < images.size()) {
             currentIndex = index;
             fullImageView.setFitWidth(500);
             fullImageView.setFitHeight(500);
             fullImageView.setImage(images.get(index));
-            fullImageStage.sizeToScene();
-            fullImageStage.show();
+
+            // Navigation Buttons
+            Button prevButton = new Button("Previous");
+            Button nextButton = new Button("Next");
+            Button backButton = new Button("Back");
+
+            // Event Listeners for Navigation
+            prevButton.setOnAction(e -> navigateImages(-1)); // Show previous image
+            nextButton.setOnAction(e -> navigateImages(1)); // Show next image
+            backButton.setOnAction(e -> primaryStage.setScene(mainScene)); // Return to gallery view
+
+            // HBox for navigation buttons
+            HBox navigationBox = new HBox(10, prevButton, nextButton, backButton);
+            navigationBox.setAlignment(Pos.CENTER);
+
+            // VBox layout for full image view
+            VBox fullImageLayout = new VBox(10, fullImageView, navigationBox);
+            fullImageLayout.setAlignment(Pos.CENTER);
+            fullImageLayout.setStyle("-fx-background-color: #008080;");
+
+            // Switch to full image view scene
+            Scene fullImageScene = new Scene(fullImageLayout, 600, 600);
+            primaryStage.setScene(fullImageScene);
         }
     }
 
